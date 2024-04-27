@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rearrange to Win</title>
+<style>
+    /* CSS for styling */
+    body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+    button{
+        background: #00802b;
+        color: white;
+        padding: 10px 50px;
+        font-size: 15px;
+        border: none;
+        border-radius: 30px;
+    }
+    .box {
+        display: inline-block;
+        width: 80px; /* Adjusted width to accommodate images */
+        height: 160px;
+        margin: 20px;
+        border: none;
+        cursor: pointer;
+        background-size: cover; /* Ensure images cover the whole box */
+    }
+    #game-container {
+        margin-top: 50px;
+    }
+    #results {
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+<h2>Rearrange to Win</h2>
+<div id="game-container">
+    <!-- Boxes will be dynamically added based on the level -->
+</div>
+<div>
+    <button onclick="reorderImages()">Restart</button>
+</div>
+<div id="results"></div>
+
+<script>
+    let levels = [
+        { size: 4 },
+        { size: 6 },
+        { size: 10 },
+        { size: 16 },
+        { size: 25 },
+        { size: 36 }
+    ];
+
+    let currentLevel = 0;
+    let correctImages = [];
+    let imageUrls = [];
+    let selectedBox = null;
+
+    startLevel(currentLevel);
+
+    function startLevel(level) {
+        currentLevel = level;
+        correctImages = generateCorrectImages(levels[level].size);
+        imageUrls = correctImages.slice(); // Copy correct images
+        shuffle(imageUrls);
+        updateBoxes();
+    }
+    // ['red', 'orange', 'brown', 'green', 'blue', 'yellow', 'purple', 'pink', 'cyan', 'gray']
+    function generateCorrectImages(size) {
+        let colors = ['red', 'orange', 'brown', 'green', 'red', 'orange', 'brown', 'green', 'red', 'orange'];
+        let images = [];
+        for (let i = 0; i < size; i++) {
+            images.push(`${colors[i % colors.length]}.jpg`);
+        }
+        return images;
+    }
+
+    function selectBox(boxIndex) {
+        if (selectedBox === null) {
+            selectedBox = boxIndex;
+            let boxElement = document.getElementById('box' + selectedBox);
+            boxElement.style.position = 'relative'; 
+            boxElement.style.top = '-10px';
+        } else {
+            swapImages(selectedBox, boxIndex);
+            let prevBoxElement = document.getElementById('box' + selectedBox);
+            prevBoxElement.style.top = '0px';
+            
+            selectedBox = null;
+            updateBoxes();
+            checkResult();
+        }
+    }
+
+    function swapImages(boxIndex1, boxIndex2) {
+        let tempImage = imageUrls[boxIndex1 - 1];
+        imageUrls[boxIndex1 - 1] = imageUrls[boxIndex2 - 1];
+        imageUrls[boxIndex2 - 1] = tempImage;
+    }
+
+    function updateBoxes() {
+        let gameContainer = document.getElementById('game-container');
+        gameContainer.innerHTML = ''; // Clear previous boxes
+        for (let i = 0; i < levels[currentLevel].size; i++) {
+            let box = document.createElement('div');
+            box.className = 'box';
+            box.id = 'box' + (i + 1);
+            box.onclick = function() { selectBox(i + 1); };
+            box.style.backgroundImage = `url(${imageUrls[i]})`;
+            gameContainer.appendChild(box);
+        }
+    }
+
+    function checkResult() {
+        let correctMatches = 0;
+        for (let i = 0; i < imageUrls.length; i++) {
+            if (imageUrls[i] === correctImages[i]) {
+                correctMatches++;
+            }
+        }
+
+        let resultsContainer = document.getElementById('results');
+        if (correctMatches === levels[currentLevel].size) {
+            resultsContainer.innerHTML = '<p>Congratulations, You win!</p>';
+            setTimeout(function() {
+                if (currentLevel < levels.length - 1) {
+                    startLevel(currentLevel + 1);
+                } else {
+                    resultsContainer.innerHTML += '<p>You have completed all levels!</p>';
+                }
+            }, 1000);
+        } else {
+            resultsContainer.innerHTML = '<p>You got ' + correctMatches + ' right.</p>';
+        }
+    }
+
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]]; 
+        }
+    }
+
+    function reorderImages() {
+        shuffle(imageUrls);
+        updateBoxes();
+        document.getElementById('results').innerHTML = '';
+    }
+</script>
+</body>
+</html>
